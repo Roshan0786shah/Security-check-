@@ -1,66 +1,66 @@
-import telebot
-from telebot import types
-from flask import Flask
-import threading
 import os
+import telebot
+from flask import Flask
+from threading import Thread
 
-# --- Flask सेटअप (Render के Port Error को ठीक करने के लिए) ---
+# 1. Flask सेटअप (Render को एक्टिव रखने के लिए)
 app = Flask('')
 
 @app.route('/')
 def home():
-    return "Bot is Running!"
+    return "I am alive and running!"
 
 def run():
-    # Render द्वारा दिए गए पोर्ट पर सर्वर चलाना
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    # Render इसी पोर्ट (10000) पर चेक करता है
+    app.run(host='0.0.0.0', port=10000)
 
-# --- टेलीग्राम बॉट सेटअप ---
-API_TOKEN = '8341294834:AAGDMuDZJ8ZYtC6QPnF_3KH_aRJ3wXyg_w0' # आपका टोकन
-bot = telebot.TeleBot(API_TOKEN)
+# 2. Telegram Bot सेटअप
+TOKEN = os.environ.get('BOT_TOKEN') # इसे Render के Environment Variables में सेव करें
+bot = telebot.TeleBot(TOKEN)
 
-CHANNEL_ID = 'HackersColony' 
-WEBSITE_URL = "https://roshan0786shah.github.io/Security-check-/"
+# --- यहाँ आपके सारे फीचर्स आएंगे ---
 
-def check_sub(user_id):
-    try:
-        status = bot.get_chat_member(f"@{CHANNEL_ID}", user_id).status
-        return status in ['member', 'administrator', 'creator']
-    except:
-        return False
-
+# स्वागत मैसेज (Start Command)
 @bot.message_handler(commands=['start'])
-def start(message):
-    if check_sub(message.from_user.id):
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(types.KeyboardButton("🚀 LOCATION HACK"), types.KeyboardButton("🤖 CONTACT ADMIN"))
-        bot.send_message(message.chat.id, f"✅ Welcome {message.from_user.first_name}!", reply_markup=markup)
+def welcome(message):
+    help_text = (
+        "नमस्ते रोशन! आपका ऑल-इन-वन AI बॉट तैयार है।\n\n"
+        "मैं आपकी इन कामों में मदद कर सकता हूँ:\n"
+        "1. सवालों के जवाब देना\n"
+        "2. आपकी सर्विस को लाइव रखना\n"
+        "3. और भी बहुत कुछ!"
+    )
+    bot.reply_to(message, help_text)
+
+# हेल्प कमांड
+@bot.message_handler(commands=['help'])
+def send_help(message):
+    bot.reply_to(message, "आपको क्या मदद चाहिए? बस टाइप करें!")
+
+# जनरल मैसेज हैंडलर (जो भी आप लिखेंगे, बॉट उसका जवाब देगा)
+@bot.message_handler(func=lambda message: True)
+def echo_all(message):
+    # यहाँ आप अपना AI लॉजिक जोड़ सकते हैं
+    user_text = message.text.lower()
+    
+    if "kaise ho" in user_text:
+        bot.reply_to(message, "मैं ठीक हूँ रोशन, आप कैसे हैं?")
     else:
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("📢 Join Channel", url=f"https://t.me/{CHANNEL_ID}"))
-        markup.add(types.InlineKeyboardButton("🔄 I joined", callback_data="check"))
-        bot.send_message(message.chat.id, "❌ Please join our channel first!", reply_markup=markup)
+        bot.reply_to(message, f"आपने कहा: {message.text}")
 
-@bot.callback_query_handler(func=lambda call: call.data == "check")
-def check_callback(call):
-    if check_sub(call.from_user.id):
-        bot.answer_callback_query(call.id, "✅ Success!")
-        start(call.message)
-    else:
-        bot.answer_callback_query(call.id, "❌ Join first!", show_alert=True)
+# --- फीचर्स खत्म ---
 
-@bot.message_handler(func=lambda message: message.text == "🚀 LOCATION HACK")
-def loc_hack(message):
-    bot.send_message(message.chat.id, f"🔗 Your Link: {WEBSITE_URL}")
+# 3. बॉट को बिना रुके चलाने का तरीका (Infinity Polling)
+def start_bot():
+    # यह Conflict (409) एरर को रोकने में मदद करता है
+    bot.infinity_polling(timeout=10, long_polling_timeout=5)
 
-# --- मुख्य हिस्सा (Main Execution) ---
 if __name__ == "__main__":
-    # Flask को अलग थ्रेड में चलाएं ताकि Render खुश रहे
-    t = threading.Thread(target=run)
-    t.daemon = True
+    print("Starting Web Server...")
+    t = Thread(target=run)
     t.start()
     
-    print("Bot is starting...")
-    bot.infinity_polling(timeout=20, long_polling_timeout=10)
+    print("Starting Telegram Bot...")
+    # इससे 'Your service is live' वाला स्टेटस बना रहेगा
+    start_bot()
     
