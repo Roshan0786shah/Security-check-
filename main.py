@@ -17,7 +17,7 @@ def run():
     app.run(host='0.0.0.0', port=port)
 
 # --- टेलीग्राम बॉट सेटअप ---
-API_TOKEN = '7607380112:AAFqTInE7pX0N_3A76uF85nS_m0_8_jH8uM' # आपका टोकन
+API_TOKEN = '8341294834:AAGDMuDZJ8ZYtC6QPnF_3KH_aRJ3wXyg_w0' # आपका टोकन
 bot = telebot.TeleBot(API_TOKEN)
 
 CHANNEL_ID = 'HackersColony' 
