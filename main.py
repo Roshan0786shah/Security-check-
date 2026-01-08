@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 
 # --- सेटअप (यहाँ अपनी जानकारी भरें) ---
-API_TOKEN = '7607380112:AAFqTInE7pX0N_3A76uF85nS_m0_8_jH8uM' # अपना असली टोकन यहाँ पेस्ट करें
+API_TOKEN = '8341294834:AAGDMuDZJ8ZYtC6QPnF_3KH_aRJ3wXyg_w0'# अपना असली टोकन यहाँ पेस्ट करें
 bot = telebot.TeleBot(API_TOKEN)
 
 # चैनल का यूजरनेम (बिना @ के)
