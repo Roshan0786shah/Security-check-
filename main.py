@@ -67,5 +67,10 @@ def loc_hack(message):
 # --- बॉट को चालू रखना (Render के लिए) ---
 if __name__ == "__main__":
     print("Bot is starting...")
-    bot.infinity_polling()
+    try:
+        # Render के लिए टाइमआउट सेटिंग के साथ बॉट शुरू करें
+        bot.infinity_polling(timeout=20, long_polling_timeout=10)
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        
       
